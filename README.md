@@ -2,6 +2,8 @@
 
 This form element plugin is a text field with added ability to AJAX load options based on matching keywords.
 
+Do see [documentation](https://dev.joget.org/community/display/marketplace/Autocomplete+Text+Field+Form+Element).
+
 # Getting Help
 
 JogetOSS is a community-led team for open source software related to the [Joget](https://www.joget.org) no-code/low-code application platform.
