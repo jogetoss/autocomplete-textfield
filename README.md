@@ -1,6 +1,6 @@
 # Description
 
-This repository is meant to serve as a general template for how to set up new repositories in the JogetOSS organization. 
+This form element plugin is a text field with added ability to AJAX load options based on matching keywords.
 
 # Getting Help
 
