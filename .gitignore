@@ -1,0 +1,50 @@
+#################
+## Java
+#################
+
+target/
+*.class
+
+#################
+## Visual Studio Code
+#################
+
+.vscode
+
+#################
+## IntelliJ
+#################
+
+.idea/
+*.iml
+*.iws
+.smarttomcat/
+
+#################
+## Netbeans
+#################
+
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+#################
+## Eclipse
+#################
+
+*.pydevproject
+.project
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath

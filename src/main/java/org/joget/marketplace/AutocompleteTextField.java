@@ -1,7 +1,15 @@
 package org.joget.marketplace;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.joget.apps.app.service.AppUtil;
 import org.joget.apps.form.model.Element;
 import org.joget.apps.form.model.FormBuilderPaletteElement;
@@ -9,8 +17,10 @@ import org.joget.apps.form.model.FormData;
 import org.joget.apps.form.model.FormRow;
 import org.joget.apps.form.model.FormRowSet;
 import org.joget.apps.form.service.FormUtil;
+import org.joget.plugin.base.PluginWebSupport;
+public class AutocompleteTextField extends Element implements FormBuilderPaletteElement, PluginWebSupport {
 
-public class AutocompleteTextField extends Element implements FormBuilderPaletteElement {
+    protected static Collection<Map> optionMap = null;
 
     @Override
     public String getName() {
@@ -56,15 +66,62 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
             selectionIDElementName = replaceLast(currentElementName, getPropertyString(FormUtil.PROPERTY_ID), selectionIDElementName);
             dataModel.put("selectionIdParamName", selectionIDElementName);
         }
+        // Gets the value set by user for Items Per Load
+        if (getPropertyString("itemsPerLoad") != null) {
+            String itemsPerLoad = getPropertyString("itemsPerLoad");
+            dataModel.put("itemsPerLoad", itemsPerLoad);
+        }
         
         // set options
-        Collection<Map> optionMap = getOptionMap(formData);
+        optionMap = getOptionMap(formData);
         dataModel.put("options", optionMap);
 
         String html = FormUtil.generateElementHtml(this, formData, template, dataModel);
         return html;
     }
     
+    @Override
+    public void webService(HttpServletRequest request, HttpServletResponse response) throws IOException  {
+        if ("POST".equalsIgnoreCase(request.getMethod())) {
+            
+            String autocompleteStatus = "";
+            List<Map<String, String>> autocompleteResult = getAutocompleteResult(request.getParameter("_query"));
+
+            if (autocompleteResult.isEmpty()) {
+                autocompleteStatus = "NO_RESULT"; // Don't show the list container
+            } else {
+                int lastCount = Integer.valueOf(request.getParameter("_lastCount")); // Keeps track of how many items have already been loaded in the list
+                int itemsPerLoad = Integer.valueOf(request.getParameter("_itemsPerLoad")); // How many items to show after first load and when scrolling down each time
+                // If count for loaded items is still smaller than the entire entries list
+                if (lastCount < autocompleteResult.size()) {
+                    // Discard all previously loaded items
+                    autocompleteResult = autocompleteResult.subList(lastCount, autocompleteResult.size());
+                    // If the limit is still smaller than the entire entries count
+                    if (itemsPerLoad < autocompleteResult.size()) {
+                        // Only send out first X (Items Per Load) of entries
+                        autocompleteResult = autocompleteResult.subList(0, itemsPerLoad);
+                    } else {
+                        autocompleteResult = autocompleteResult.subList(0, autocompleteResult.size()); // Give what's left
+                    }
+                } else {
+                    autocompleteResult = new ArrayList<>();
+                    autocompleteStatus = "END_OF_RESULT"; // No more items left
+                }
+            }
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("autocompleteResult", new JSONArray(autocompleteResult));
+            jsonObject.put("autocompleteStatus", autocompleteStatus);
+
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            try (PrintWriter out = response.getWriter()) {
+                out.print(jsonObject.toString());
+                out.flush();
+            }
+        }
+    }
+
     @Override
     public FormRowSet formatData(FormData formData) {
         FormRowSet rowSet = null;
@@ -93,6 +150,27 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
     @Override
     public String getFormBuilderTemplate() {
         return "<label class='label'>Autocomplete Text Field</label><input type='text' />";
+    }
+
+    /**
+     * Returns a list of entries where the "label" contains the given query string.
+     * @param query The search string used to filter entries.
+     * @return A list of maps where each map's "label" contains the query string.
+     */
+    public static List<Map<String, String>> getAutocompleteResult(String query) {
+        if (query == null || query.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Map<String, String>> results = new ArrayList<Map<String, String>>();
+        for (Map map : optionMap) {
+            if (map.get("label") != null) {
+                String label = map.get("label").toString().toLowerCase();
+                if (label.contains(query.toLowerCase())) {
+                    results.add(map);
+                }
+            }
+        }
+        return results;
     }
 
     @Override
