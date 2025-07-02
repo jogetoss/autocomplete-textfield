@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
@@ -20,7 +21,8 @@ import org.joget.apps.form.service.FormUtil;
 import org.joget.plugin.base.PluginWebSupport;
 public class AutocompleteTextField extends Element implements FormBuilderPaletteElement, PluginWebSupport {
 
-    protected static Collection<Map> optionMap = null;
+    // Map to store optionMap of each field
+    protected static Map<String, Collection<Map>> optionMaps = new ConcurrentHashMap<>();
 
     @Override
     public String getName() {
@@ -72,9 +74,12 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
             dataModel.put("itemsPerLoad", itemsPerLoad);
         }
         
-        // set options
-        optionMap = getOptionMap(formData);
-        dataModel.put("options", optionMap);
+        String elementParamName = FormUtil.getElementParameterName(this);
+        // Store optionMap in optionMaps if not already present
+        if (!optionMaps.containsKey(elementParamName)) {
+            Collection<Map> optionMap = getOptionMap(formData);
+            optionMaps.put(elementParamName, optionMap);
+        }
 
         String html = FormUtil.generateElementHtml(this, formData, template, dataModel);
         return html;
@@ -85,7 +90,7 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
         if ("POST".equalsIgnoreCase(request.getMethod())) {
             
             String autocompleteStatus = "";
-            List<Map<String, String>> autocompleteResult = getAutocompleteResult(request.getParameter("_query"));
+            List<Map<String, String>> autocompleteResult = getAutocompleteResult(request.getParameter("_elementParamName"), request.getParameter("_query"));
 
             if (autocompleteResult.isEmpty()) {
                 autocompleteStatus = "NO_RESULT"; // Don't show the list container
@@ -154,13 +159,15 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
 
     /**
      * Returns a list of entries where the "label" contains the given query string.
+     * @param elementParamName The key to get the related optionMap.
      * @param query The search string used to filter entries.
      * @return A list of maps where each map's "label" contains the query string.
      */
-    public static List<Map<String, String>> getAutocompleteResult(String query) {
+    public static List<Map<String, String>> getAutocompleteResult(String elementParamName, String query) {
         if (query == null || query.isEmpty()) {
             return new ArrayList<>();
         }
+        Collection<Map> optionMap = optionMaps.get(elementParamName);
         List<Map<String, String>> results = new ArrayList<Map<String, String>>();
         for (Map map : optionMap) {
             if (map.get("label") != null) {
