@@ -1,1 +1,51 @@
 /* Add your own style here! */
+
+.autocomplete-field-container input[type="text"] {
+    margin-top: 5px;
+    width: 100% !important;
+}
+
+.autocomplete-list-container {
+    margin-top: 0.5em;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: scroll;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.autocomplete-list-container ul {
+    margin: 0; 
+    padding: 0; 
+    list-style: none;
+}
+
+.autocomplete-list-container ul li {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.autocomplete-list-container ul li.no-border-bottom{
+    border-bottom: none;
+}
+
+.autocomplete-list-container ul li#loading-indicator {
+    border-bottom: none;
+    cursor: default;
+    text-align: center;
+    user-select: none;
+}
+
+.autocomplete-list-container ul li:hover:not(#loading-indicator) {
+    background-color: #ccc;
+}
+
+.autocomplete-list-container.hide{
+    visibility: hidden;
+}
