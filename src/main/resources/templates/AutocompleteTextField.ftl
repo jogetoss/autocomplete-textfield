@@ -1,5 +1,5 @@
 <div class="form-cell" ${elementMetaData!}>
-    <link rel="stylesheet" href="${request.contextPath}/plugin/org.joget.marketplace.AutocompleteTextField/css/AutocompleteTextField.css"></script>
+    <link rel="stylesheet" href="${request.contextPath}/plugin/org.joget.marketplace.AutocompleteTextField/css/AutocompleteTextField.css">
     <script type="text/javascript">
       $(function(){
         var decodeEntities = (function() {
@@ -35,30 +35,39 @@
             }
         ];
         selections.pop();
-        $("#${elementParamName!}").autocomplete({
-          source: selections,
-          select: function( event, ui ) {
-              $("#${elementParamName!}").val( decodeEntities(ui.item.label) );
-              <#if selectionIdParamName! != ''>
-              $("#${selectionIdParamName!}").val( ui.item.value );
-              </#if>
-              return false;
-            }
-        }).autocomplete( "instance" )._renderItem = function( ul, item ) {
-            return $( "<li>" )
-              .append( "<div>" + item.label + "</div>" )
-              .appendTo( ul );
-        };
-      });
-    </script>
+        // Initialize on first focus of THIS input (works even with duplicate IDs)
+      $(document).on("focus", "input[name='${elementParamName!}']", function () {
+       var $t = $(this);
+
+        // prevent double-initialization
+       if ($t.data("ac-init")) return;
+       $t.data("ac-init", true);
+
+       try { $t.autocomplete("destroy"); } catch(e) {}
+
+        $t.autocomplete({
+        source: selections,
+        select: function (event, ui) {
+        $t.val(decodeEntities(ui.item.label));
+        <#if selectionIdParamName! != ''>
+        $t.closest(".form-cell").find("input[name='${selectionIdParamName!}']").val(ui.item.value);
+        </#if>
+        return false;
+      }
+     }).autocomplete("instance")._renderItem = function (ul, item) {
+      return $("<li>").append("<div>" + item.label + "</div>").appendTo(ul);
+      };
+     });
+
+        });
+        </script>
     <label class="label">${element.properties.label} <span class="form-cell-validator">${decoration}</span><#if error??> <span class="form-error-message">${error}</span></#if></label>
     <#if (element.properties.readonly! == 'true' && element.properties.readonlyLabel! == 'true') >
-        <div class="form-cell-value"><span>${value!?html}</span></div>
-        <input id="${elementParamName!}" name="${elementParamName!}" type="hidden" value="${value!?html}" />
+    <div class="form-cell-value"><span>${value!?html}</span></div>
+    <input id="${elementParamName!}" name="${elementParamName!}" type="hidden" value="${value!?html}" />
     <#else>
-        <input id="${elementParamName!}" name="${elementParamName!}" type="text" size="${element.properties.size!}" value="${value!?html}" maxlength="${element.properties.maxlength!}" <#if error??>class="form-error-cell"</#if> <#if element.properties.readonly! == 'true'>readonly</#if> />
+    <input id="${elementParamName!}" name="${elementParamName!}" type="text" size="${element.properties.size!}" value="${value!?html}" maxlength="${element.properties.maxlength!}" <#if error??>class="form-error-cell"</#if> <#if element.properties.readonly! == 'true'>readonly</#if> />
     </#if>
-</div>
+    </div>
 
 
-            

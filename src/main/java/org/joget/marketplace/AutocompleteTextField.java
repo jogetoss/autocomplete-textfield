@@ -19,7 +19,7 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
 
     @Override
     public String getVersion() {
-        return "7.0.0";
+        return "7.0.1";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
     @Override
     public String renderTemplate(FormData formData, Map dataModel) {
         String template = "AutocompleteTextField.ftl";
-
+        
         // set textfield with value (option label)
         String value = FormUtil.getElementPropertyValue(this, formData);
         dataModel.put("value", value);
@@ -60,7 +60,7 @@ public class AutocompleteTextField extends Element implements FormBuilderPalette
         // set options
         Collection<Map> optionMap = getOptionMap(formData);
         dataModel.put("options", optionMap);
-
+        
         String html = FormUtil.generateElementHtml(this, formData, template, dataModel);
         return html;
     }
